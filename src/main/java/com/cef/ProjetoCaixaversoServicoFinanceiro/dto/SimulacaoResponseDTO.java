@@ -1,4 +1,4 @@
-package com.cef.servicofinanceiro.dto;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.dto;
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 

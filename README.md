@@ -1,9 +1,6 @@
-# app-produto-financeiro
+# Simulador de Financiamentos
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
-
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
-
+API em Java 25 com Quarkus para simulação de juros compostos, geração de memória de cálculo e persistência em H2.
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:

@@ -1,4 +1,4 @@
-package com.cef.servicofinanceiro.model;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

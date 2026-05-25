@@ -1,12 +1,12 @@
-package com.cef.servicofinanceiro.service;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.service;
 
-import com.cef.servicofinanceiro.dto.MemoriaCalculoDTO;
-import com.cef.servicofinanceiro.dto.SimulacaoRequestDTO;
-import com.cef.servicofinanceiro.dto.SimulacaoResponseDTO;
-import com.cef.servicofinanceiro.exception.RegraDeNegocioException;
-import com.cef.servicofinanceiro.model.MemoriaCalculo;
-import com.cef.servicofinanceiro.model.Simulacao;
-import com.cef.servicofinanceiro.repository.SimulacaoRepository;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.MemoriaCalculoDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoRequestDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoResponseDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.exception.RegraDeNegocioException;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.model.MemoriaCalculo;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.model.Simulacao;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.repository.SimulacaoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;

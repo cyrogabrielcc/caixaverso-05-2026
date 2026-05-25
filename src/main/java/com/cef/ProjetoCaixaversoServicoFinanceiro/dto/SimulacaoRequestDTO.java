@@ -1,4 +1,4 @@
-package com.cef.servicofinanceiro.dto;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;

@@ -1,4 +1,4 @@
-package com.cef.servicofinanceiro.model;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.model;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

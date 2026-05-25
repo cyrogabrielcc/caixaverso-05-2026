@@ -1,6 +1,7 @@
-package com.cef.servicofinanceiro.repository;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.repository;
 
-import com.cef.servicofinanceiro.model.Simulacao;
+
+import com.cef.ProjetoCaixaversoServicoFinanceiro.model.Simulacao;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 

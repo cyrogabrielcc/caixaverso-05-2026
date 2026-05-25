@@ -1,8 +1,8 @@
-package com.cef.servicofinanceiro.resources;
+package com.cef.ProjetoCaixaversoServicoFinanceiro.resources;
 
-import com.cef.servicofinanceiro.dto.SimulacaoRequestDTO;
-import com.cef.servicofinanceiro.dto.SimulacaoResponseDTO;
-import com.cef.servicofinanceiro.service.SimulacaoService;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoRequestDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoResponseDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.service.SimulacaoService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
