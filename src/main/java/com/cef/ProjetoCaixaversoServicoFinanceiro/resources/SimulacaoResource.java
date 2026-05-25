@@ -2,7 +2,9 @@ package com.cef.ProjetoCaixaversoServicoFinanceiro.resources;
 
 import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoRequestDTO;
 import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoResponseDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.exception.ErroResponse;
 import com.cef.ProjetoCaixaversoServicoFinanceiro.service.SimulacaoService;
+
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -29,7 +31,7 @@ import java.net.URI;
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(
         name = "Simulações",
-        description = "Endpoints para simular juros compostos e consultar simulações existentes."
+        description = "Endpoints para simular juros compostos, persistir o resultado e consultar simulações existentes."
 )
 public class SimulacaoResource {
 
@@ -43,7 +45,7 @@ public class SimulacaoResource {
     @POST
     @Operation(
             summary = "Simula e persiste um cálculo de juros compostos",
-            description = "Recebe os dados da operação financeira, calcula a evolução mês a mês dos juros compostos, persiste a simulação no banco de dados e retorna o resultado completo."
+            description = "Recebe valor inicial, taxa de juros mensal e prazo em meses. Calcula a evolução mês a mês por juros compostos, persiste a simulação no H2 e retorna o resultado completo com ID, totais e memória de cálculo."
     )
     @APIResponse(
             responseCode = "201",
@@ -55,13 +57,36 @@ public class SimulacaoResource {
     )
     @APIResponse(
             responseCode = "400",
-            description = "Dados inválidos na requisição ou violação de regra de negócio."
+            description = "Dados inválidos na requisição ou violação de regra de negócio.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
+    )
+    @APIResponse(
+            responseCode = "415",
+            description = "Tipo de mídia não suportado. A API aceita requisições com Content-Type application/json.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
+    )
+    @APIResponse(
+            responseCode = "500",
+            description = "Erro interno inesperado ao processar a simulação.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
     )
     public Response simular(
             @RequestBody(
                     description = "Dados necessários para realizar a simulação de juros compostos.",
                     required = true,
-                    content = @Content(schema = @Schema(implementation = SimulacaoRequestDTO.class))
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON,
+                            schema = @Schema(implementation = SimulacaoRequestDTO.class)
+                    )
             )
             @Valid SimulacaoRequestDTO requestDTO
     ) {
@@ -82,7 +107,7 @@ public class SimulacaoResource {
     @Path("/{id}")
     @Operation(
             summary = "Consulta uma simulação existente",
-            description = "Busca uma simulação previamente persistida pelo seu identificador único, retornando os parâmetros de entrada, os totais calculados e a memória de cálculo completa."
+            description = "Busca uma simulação previamente persistida pelo ID informado na rota. Retorna os parâmetros de entrada, os totais calculados e a memória de cálculo completa associada."
     )
     @APIResponse(
             responseCode = "200",
@@ -93,8 +118,28 @@ public class SimulacaoResource {
             )
     )
     @APIResponse(
+            responseCode = "400",
+            description = "ID inválido. O ID da simulação deve ser maior que zero.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
+    )
+    @APIResponse(
             responseCode = "404",
-            description = "Nenhuma simulação encontrada para o ID informado."
+            description = "Nenhuma simulação foi encontrada para o ID informado.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
+    )
+    @APIResponse(
+            responseCode = "500",
+            description = "Erro interno inesperado ao consultar a simulação.",
+            content = @Content(
+                    mediaType = MediaType.APPLICATION_JSON,
+                    schema = @Schema(implementation = ErroResponse.class)
+            )
     )
     public Response buscarPorId(
             @Parameter(

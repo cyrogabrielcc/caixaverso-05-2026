@@ -10,16 +10,28 @@ import java.math.BigDecimal;
 )
 public class MemoriaCalculoDTO {
 
-    @Schema(description = "Mês correspondente ao cálculo.", example = "1")
+    @Schema(
+            description = "Número do mês correspondente ao cálculo.",
+            example = "1"
+    )
     private int mes;
 
-    @Schema(description = "Saldo no início do mês.", example = "1000.00")
+    @Schema(
+            description = "Saldo no início do mês, antes da incidência dos juros.",
+            example = "1000.00"
+    )
     private BigDecimal saldoInicial;
 
-    @Schema(description = "Valor do juro aplicado no mês.", example = "15.00")
+    @Schema(
+            description = "Valor dos juros incidentes no mês.",
+            example = "15.00"
+    )
     private BigDecimal juro;
 
-    @Schema(description = "Saldo ao final do mês após a incidência dos juros.", example = "1015.00")
+    @Schema(
+            description = "Saldo ao final do mês, após a incidência dos juros.",
+            example = "1015.00"
+    )
     private BigDecimal saldoFinal;
 
     private MemoriaCalculoDTO(

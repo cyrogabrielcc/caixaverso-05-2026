@@ -1,16 +1,51 @@
 package com.cef.ProjetoCaixaversoServicoFinanceiro.exception;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
+@Schema(
+        name = "ErroResponse",
+        description = "Resposta padronizada para erros da API."
+)
 public class ErroResponse {
 
+    @Schema(
+            description = "Data e hora em que o erro ocorreu, no formato ISO-8601.",
+            example = "2026-05-25T17:30:00Z"
+    )
     private final String timestamp;
+
+    @Schema(
+            description = "Código HTTP da resposta.",
+            example = "400"
+    )
     private final int status;
+
+    @Schema(
+            description = "Título resumido do erro.",
+            example = "Dados inválidos"
+    )
     private final String erro;
+
+    @Schema(
+            description = "Mensagem detalhada sobre o erro ocorrido.",
+            example = "A requisição possui campos inválidos."
+    )
     private final String mensagem;
+
+    @Schema(
+            description = "Caminho do endpoint em que o erro ocorreu.",
+            example = "/simulacoes"
+    )
     private final String caminho;
+
+    @Schema(
+            description = "Lista de detalhes adicionais sobre o erro.",
+            example = "[\"valorInicial: O valor inicial é obrigatório.\"]"
+    )
     private final List<String> detalhes;
 
     private ErroResponse(

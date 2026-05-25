@@ -18,16 +18,21 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @ApplicationScoped
 public class SimulacaoService {
 
     private final SimulacaoRepository simulacaoRepository;
 
-    private static final MathContext MC = new MathContext(12, RoundingMode.HALF_UP);
+    private static final RoundingMode ROUNDING_MODE = RoundingMode.HALF_UP;
+    private static final MathContext MC = new MathContext(20, ROUNDING_MODE);
+
     private static final int SCALE_MONETARIO = 2;
-    private static final int SCALE_TAXA = 6;
+    private static final int SCALE_TAXA_PERCENTUAL = 6;
+    private static final int SCALE_TAXA_DECIMAL = 10;
+
+    private static final BigDecimal CEM = BigDecimal.valueOf(100);
+    private static final BigDecimal ZERO_MONETARIO = BigDecimal.ZERO.setScale(SCALE_MONETARIO, ROUNDING_MODE);
 
     @Inject
     public SimulacaoService(SimulacaoRepository simulacaoRepository) {
@@ -38,14 +43,9 @@ public class SimulacaoService {
     public SimulacaoResponseDTO simular(SimulacaoRequestDTO requestDTO) {
         validarRequest(requestDTO);
 
-        BigDecimal valorInicial = requestDTO.getValorInicial().setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
-        BigDecimal taxaJurosMensal = requestDTO.getTaxaJurosMensal().setScale(SCALE_TAXA, RoundingMode.HALF_UP);
+        BigDecimal valorInicial = normalizarValorMonetario(requestDTO.getValorInicial());
+        BigDecimal taxaJurosMensal = normalizarTaxaPercentual(requestDTO.getTaxaJurosMensal());
         Integer prazoMeses = requestDTO.getPrazoMeses();
-
-        Simulacao simulacao = new Simulacao();
-        simulacao.setValorInicial(valorInicial);
-        simulacao.setTaxaJurosMensal(taxaJurosMensal);
-        simulacao.setPrazoMeses(prazoMeses);
 
         List<MemoriaCalculo> memoriaCalculo = gerarMemoriaCalculo(
                 valorInicial,
@@ -53,15 +53,18 @@ public class SimulacaoService {
                 prazoMeses
         );
 
-        simulacao.setMemoriaCalculo(memoriaCalculo);
-
         BigDecimal valorTotalFinal = calcularValorTotalFinal(memoriaCalculo);
-        BigDecimal valorTotalJuros = valorTotalFinal
-                .subtract(valorInicial)
-                .setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+        BigDecimal valorTotalJuros = normalizarValorMonetario(
+                valorTotalFinal.subtract(valorInicial, MC)
+        );
 
+        Simulacao simulacao = new Simulacao();
+        simulacao.setValorInicial(valorInicial);
+        simulacao.setTaxaJurosMensal(taxaJurosMensal);
+        simulacao.setPrazoMeses(prazoMeses);
         simulacao.setValorTotalFinal(valorTotalFinal);
         simulacao.setValorTotalJuros(valorTotalJuros);
+        simulacao.setMemoriaCalculo(memoriaCalculo);
 
         simulacaoRepository.persistAndFlush(simulacao);
 
@@ -75,13 +78,12 @@ public class SimulacaoService {
     }
 
     private Simulacao findSimulacaoById(Long id) {
-        Optional<Simulacao> optionalSimulacao = simulacaoRepository.findByIdOptional(id);
-
-        if (optionalSimulacao.isPresent()) {
-            return optionalSimulacao.get();
+        if (id == null || id <= 0) {
+            throw new RegraDeNegocioException("O ID da simulação deve ser maior que zero.");
         }
 
-        throw new EntityNotFoundException("Simulação não encontrada com o ID: " + id);
+        return simulacaoRepository.findByIdOptional(id)
+                .orElseThrow(() -> new EntityNotFoundException("Simulação não encontrada com o ID: " + id));
     }
 
     private void validarRequest(SimulacaoRequestDTO requestDTO) {
@@ -89,15 +91,27 @@ public class SimulacaoService {
             throw new RegraDeNegocioException("Os dados da simulação são obrigatórios.");
         }
 
-        if (requestDTO.getValorInicial() == null || requestDTO.getValorInicial().compareTo(BigDecimal.ZERO) <= 0) {
+        if (requestDTO.getValorInicial() == null) {
+            throw new RegraDeNegocioException("O valor inicial é obrigatório.");
+        }
+
+        if (requestDTO.getValorInicial().compareTo(BigDecimal.ZERO) <= 0) {
             throw new RegraDeNegocioException("O valor inicial deve ser maior que zero.");
         }
 
-        if (requestDTO.getTaxaJurosMensal() == null || requestDTO.getTaxaJurosMensal().compareTo(BigDecimal.ZERO) < 0) {
+        if (requestDTO.getTaxaJurosMensal() == null) {
+            throw new RegraDeNegocioException("A taxa de juros mensal é obrigatória.");
+        }
+
+        if (requestDTO.getTaxaJurosMensal().compareTo(BigDecimal.ZERO) < 0) {
             throw new RegraDeNegocioException("A taxa de juros mensal não pode ser negativa.");
         }
 
-        if (requestDTO.getPrazoMeses() == null || requestDTO.getPrazoMeses() <= 0) {
+        if (requestDTO.getPrazoMeses() == null) {
+            throw new RegraDeNegocioException("O prazo em meses é obrigatório.");
+        }
+
+        if (requestDTO.getPrazoMeses() <= 0) {
             throw new RegraDeNegocioException("O prazo em meses deve ser maior que zero.");
         }
     }
@@ -109,21 +123,17 @@ public class SimulacaoService {
     ) {
         List<MemoriaCalculo> memoriaCalculo = new ArrayList<>();
 
-        BigDecimal taxaDecimal = taxaJurosMensal
-                .divide(BigDecimal.valueOf(100), MC);
-
+        BigDecimal taxaDecimal = converterTaxaPercentualParaDecimal(taxaJurosMensal);
         BigDecimal saldoAtual = valorInicial;
 
         for (int mes = 1; mes <= prazoMeses; mes++) {
-            BigDecimal saldoInicial = saldoAtual.setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+            BigDecimal saldoInicial = normalizarValorMonetario(saldoAtual);
 
-            BigDecimal juro = saldoInicial
-                    .multiply(taxaDecimal, MC)
-                    .setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+            BigDecimal juro = calcularJuroDoMes(saldoInicial, taxaDecimal);
 
-            BigDecimal saldoFinal = saldoInicial
-                    .add(juro)
-                    .setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+            BigDecimal saldoFinal = normalizarValorMonetario(
+                    saldoInicial.add(juro, MC)
+            );
 
             MemoriaCalculo memoria = new MemoriaCalculo();
             memoria.setMes(mes);
@@ -139,25 +149,44 @@ public class SimulacaoService {
         return memoriaCalculo;
     }
 
+    private BigDecimal calcularJuroDoMes(BigDecimal saldoInicial, BigDecimal taxaDecimal) {
+        return normalizarValorMonetario(
+                saldoInicial.multiply(taxaDecimal, MC)
+        );
+    }
+
+    private BigDecimal converterTaxaPercentualParaDecimal(BigDecimal taxaPercentual) {
+        return taxaPercentual
+                .divide(CEM, MC)
+                .setScale(SCALE_TAXA_DECIMAL, ROUNDING_MODE);
+    }
+
     private BigDecimal calcularValorTotalFinal(List<MemoriaCalculo> memoriaCalculo) {
         if (memoriaCalculo == null || memoriaCalculo.isEmpty()) {
-            return BigDecimal.ZERO.setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+            return ZERO_MONETARIO;
         }
 
-        return memoriaCalculo
-                .getLast()
-                .getSaldoFinal()
-                .setScale(SCALE_MONETARIO, RoundingMode.HALF_UP);
+        return normalizarValorMonetario(
+                memoriaCalculo.get(memoriaCalculo.size() - 1).getSaldoFinal()
+        );
+    }
+
+    private BigDecimal normalizarValorMonetario(BigDecimal valor) {
+        return valor.setScale(SCALE_MONETARIO, ROUNDING_MODE);
+    }
+
+    private BigDecimal normalizarTaxaPercentual(BigDecimal taxaPercentual) {
+        return taxaPercentual.setScale(SCALE_TAXA_PERCENTUAL, ROUNDING_MODE);
     }
 
     private SimulacaoResponseDTO toResponseDTO(Simulacao simulacao) {
         return SimulacaoResponseDTO.builder()
                 .id(simulacao.getId())
-                .valorInicial(simulacao.getValorInicial())
-                .taxaJurosMensal(simulacao.getTaxaJurosMensal())
+                .valorInicial(normalizarValorMonetario(simulacao.getValorInicial()))
+                .taxaJurosMensal(normalizarTaxaPercentual(simulacao.getTaxaJurosMensal()))
                 .prazoMeses(simulacao.getPrazoMeses())
-                .valorTotalFinal(simulacao.getValorTotalFinal())
-                .valorTotalJuros(simulacao.getValorTotalJuros())
+                .valorTotalFinal(normalizarValorMonetario(simulacao.getValorTotalFinal()))
+                .valorTotalJuros(normalizarValorMonetario(simulacao.getValorTotalJuros()))
                 .memoriaCalculo(toMemoriaCalculoDTOList(simulacao.getMemoriaCalculo()))
                 .build();
     }
@@ -177,9 +206,9 @@ public class SimulacaoService {
     private MemoriaCalculoDTO toMemoriaCalculoDTO(MemoriaCalculo memoriaCalculo) {
         return MemoriaCalculoDTO.builder()
                 .mes(memoriaCalculo.getMes())
-                .saldoInicial(memoriaCalculo.getSaldoInicial())
-                .juro(memoriaCalculo.getJuro())
-                .saldoFinal(memoriaCalculo.getSaldoFinal())
+                .saldoInicial(normalizarValorMonetario(memoriaCalculo.getSaldoInicial()))
+                .juro(normalizarValorMonetario(memoriaCalculo.getJuro()))
+                .saldoFinal(normalizarValorMonetario(memoriaCalculo.getSaldoFinal()))
                 .build();
     }
 }

@@ -9,12 +9,12 @@ import java.math.BigDecimal;
 
 @Schema(
         name = "SimulacaoRequest",
-        description = "Representa os dados de entrada para uma simulação de juros compostos."
+        description = "Payload de entrada para simulação de juros compostos."
 )
 public class SimulacaoRequestDTO {
 
     @Schema(
-            description = "Valor inicial da operação financeira.",
+            description = "Valor inicial da operação financeira. Deve ser maior que zero.",
             example = "1000.00",
             required = true
     )
@@ -24,7 +24,7 @@ public class SimulacaoRequestDTO {
 
     @Schema(
             description = "Taxa de juros mensal em formato percentual. Exemplo: 1.5 representa 1,5% ao mês.",
-            example = "1.5",
+            example = "1.50",
             required = true
     )
     @NotNull(message = "A taxa de juros mensal é obrigatória.")
@@ -32,7 +32,7 @@ public class SimulacaoRequestDTO {
     private BigDecimal taxaJurosMensal;
 
     @Schema(
-            description = "Prazo da operação em meses.",
+            description = "Prazo da simulação em meses. Deve ser maior que zero.",
             example = "12",
             required = true
     )

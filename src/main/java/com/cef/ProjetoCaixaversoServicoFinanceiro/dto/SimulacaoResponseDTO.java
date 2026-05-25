@@ -7,29 +7,50 @@ import java.util.List;
 
 @Schema(
         name = "SimulacaoResponse",
-        description = "Representa o resultado completo de uma simulação de juros compostos."
+        description = "Resposta completa de uma simulação de juros compostos, incluindo totais calculados e memória de cálculo mensal."
 )
 public class SimulacaoResponseDTO {
 
-    @Schema(description = "Identificador único da simulação.", example = "1", readOnly = true)
+    @Schema(
+            description = "Identificador único da simulação persistida.",
+            example = "1",
+            readOnly = true
+    )
     private Long id;
 
-    @Schema(description = "Valor inicial informado para a simulação.", example = "1000.00")
+    @Schema(
+            description = "Valor inicial informado para a simulação.",
+            example = "1000.00"
+    )
     private BigDecimal valorInicial;
 
-    @Schema(description = "Taxa de juros mensal em formato percentual.", example = "1.5")
+    @Schema(
+            description = "Taxa de juros mensal em formato percentual.",
+            example = "1.500000"
+    )
     private BigDecimal taxaJurosMensal;
 
-    @Schema(description = "Prazo da simulação em meses.", example = "12")
+    @Schema(
+            description = "Prazo da simulação em meses.",
+            example = "12"
+    )
     private Integer prazoMeses;
 
-    @Schema(description = "Valor total final após a aplicação dos juros compostos.", example = "1195.62")
+    @Schema(
+            description = "Valor total final após a aplicação dos juros compostos.",
+            example = "1195.62"
+    )
     private BigDecimal valorTotalFinal;
 
-    @Schema(description = "Valor total de juros acumulados no período.", example = "195.62")
+    @Schema(
+            description = "Valor total de juros acumulados durante o período.",
+            example = "195.62"
+    )
     private BigDecimal valorTotalJuros;
 
-    @Schema(description = "Memória de cálculo mensal da simulação.")
+    @Schema(
+            description = "Lista com a evolução mês a mês da simulação."
+    )
     private List<MemoriaCalculoDTO> memoriaCalculo;
 
     private SimulacaoResponseDTO(
