@@ -54,6 +54,7 @@ public class SimulacaoService {
         );
 
         BigDecimal valorTotalFinal = calcularValorTotalFinal(memoriaCalculo);
+
         BigDecimal valorTotalJuros = normalizarValorMonetario(
                 valorTotalFinal.subtract(valorInicial, MC)
         );
@@ -91,28 +92,38 @@ public class SimulacaoService {
             throw new RegraDeNegocioException("Os dados da simulação são obrigatórios.");
         }
 
-        if (requestDTO.getValorInicial() == null) {
-            throw new RegraDeNegocioException("O valor inicial é obrigatório.");
+        validarValorInicial(requestDTO.getValorInicial());
+        validarTaxaJurosMensal(requestDTO.getTaxaJurosMensal());
+        validarPrazoMeses(requestDTO.getPrazoMeses());
+    }
+
+    private void validarValorInicial(BigDecimal valorInicial) {
+        if (valorInicial == null) {
+            throw new RegraDeNegocioException("O valor inicial é obrigatório e deve ser numérico.");
         }
 
-        if (requestDTO.getValorInicial().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RegraDeNegocioException("O valor inicial deve ser maior que zero.");
+        if (valorInicial.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RegraDeNegocioException("O valor inicial deve ser um número maior que zero.");
+        }
+    }
+
+    private void validarTaxaJurosMensal(BigDecimal taxaJurosMensal) {
+        if (taxaJurosMensal == null) {
+            throw new RegraDeNegocioException("A taxa de juros mensal é obrigatória e deve ser numérica.");
         }
 
-        if (requestDTO.getTaxaJurosMensal() == null) {
-            throw new RegraDeNegocioException("A taxa de juros mensal é obrigatória.");
+        if (taxaJurosMensal.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RegraDeNegocioException("A taxa de juros mensal deve ser um número maior ou igual a zero.");
+        }
+    }
+
+    private void validarPrazoMeses(Integer prazoMeses) {
+        if (prazoMeses == null) {
+            throw new RegraDeNegocioException("O prazo em meses é obrigatório e deve ser numérico.");
         }
 
-        if (requestDTO.getTaxaJurosMensal().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RegraDeNegocioException("A taxa de juros mensal não pode ser negativa.");
-        }
-
-        if (requestDTO.getPrazoMeses() == null) {
-            throw new RegraDeNegocioException("O prazo em meses é obrigatório.");
-        }
-
-        if (requestDTO.getPrazoMeses() <= 0) {
-            throw new RegraDeNegocioException("O prazo em meses deve ser maior que zero.");
+        if (prazoMeses <= 0) {
+            throw new RegraDeNegocioException("O prazo em meses deve ser um número inteiro maior que zero.");
         }
     }
 
@@ -129,7 +140,10 @@ public class SimulacaoService {
         for (int mes = 1; mes <= prazoMeses; mes++) {
             BigDecimal saldoInicial = normalizarValorMonetario(saldoAtual);
 
-            BigDecimal juro = calcularJuroDoMes(saldoInicial, taxaDecimal);
+            BigDecimal juro = calcularJuroDoMes(
+                    saldoInicial,
+                    taxaDecimal
+            );
 
             BigDecimal saldoFinal = normalizarValorMonetario(
                     saldoInicial.add(juro, MC)
@@ -149,7 +163,10 @@ public class SimulacaoService {
         return memoriaCalculo;
     }
 
-    private BigDecimal calcularJuroDoMes(BigDecimal saldoInicial, BigDecimal taxaDecimal) {
+    private BigDecimal calcularJuroDoMes(
+            BigDecimal saldoInicial,
+            BigDecimal taxaDecimal
+    ) {
         return normalizarValorMonetario(
                 saldoInicial.multiply(taxaDecimal, MC)
         );

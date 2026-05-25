@@ -17,7 +17,19 @@ import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.reactive.server.ServerExceptionMapper;
 
+import java.math.BigDecimal;
 import java.util.List;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+
+import jakarta.ws.rs.ProcessingException;
+
+
+import java.util.ArrayList;
+
 
 @Provider
 public class GlobalExceptionHandler {
@@ -53,23 +65,74 @@ public class GlobalExceptionHandler {
                 .sorted()
                 .toList();
 
-        ErroResponse erroResponse = ErroResponse.withDetalhes(
-                Response.Status.BAD_REQUEST.getStatusCode(),
+        return buildResponseComDetalhes(
+                Response.Status.BAD_REQUEST,
                 "Dados inválidos",
                 "A requisição possui campos inválidos.",
-                obterCaminho(),
                 detalhes
         );
+    }
 
-        return Response
-                .status(Response.Status.BAD_REQUEST)
-                .type(MediaType.APPLICATION_JSON)
-                .entity(erroResponse)
-                .build();
+    @ServerExceptionMapper
+    public Response handleInvalidFormatException(InvalidFormatException ex) {
+        return buildResponseComDetalhes(
+                Response.Status.BAD_REQUEST,
+                "Tipo de dado inválido",
+                "A requisição possui campo com tipo incompatível.",
+                montarDetalhesCampoInvalido(ex)
+        );
+    }
+
+    @ServerExceptionMapper
+    public Response handleMismatchedInputException(MismatchedInputException ex) {
+        return buildResponseComDetalhes(
+                Response.Status.BAD_REQUEST,
+                "Tipo de dado inválido",
+                "A requisição possui campo com tipo incompatível com o contrato da API.",
+                montarDetalhesMapeamentoInvalido(ex)
+        );
+    }
+
+    @ServerExceptionMapper
+    public Response handleJsonParseException(JsonParseException ex) {
+        return buildResponseComDetalhes(
+                Response.Status.BAD_REQUEST,
+                "JSON inválido",
+                "O corpo da requisição possui JSON malformado.",
+                List.of("Verifique a estrutura do JSON enviado, incluindo aspas, vírgulas, chaves e colchetes.")
+        );
+    }
+
+    @ServerExceptionMapper
+    public Response handleJsonProcessingException(JsonProcessingException ex) {
+        return buildResponseComDetalhes(
+                Response.Status.BAD_REQUEST,
+                "JSON inválido",
+                "O corpo da requisição não pôde ser convertido para o contrato esperado pela API.",
+                List.of("Verifique se os campos numéricos foram enviados como números, sem aspas.")
+        );
     }
 
     @ServerExceptionMapper
     public Response handleBadRequestException(BadRequestException ex) {
+        Throwable causaJson = encontrarCausaJson(ex);
+
+        if (causaJson instanceof InvalidFormatException invalidFormatException) {
+            return handleInvalidFormatException(invalidFormatException);
+        }
+
+        if (causaJson instanceof MismatchedInputException mismatchedInputException) {
+            return handleMismatchedInputException(mismatchedInputException);
+        }
+
+        if (causaJson instanceof JsonParseException jsonParseException) {
+            return handleJsonParseException(jsonParseException);
+        }
+
+        if (causaJson instanceof JsonProcessingException jsonProcessingException) {
+            return handleJsonProcessingException(jsonProcessingException);
+        }
+
         return buildResponse(
                 Response.Status.BAD_REQUEST,
                 "Requisição inválida",
@@ -78,11 +141,29 @@ public class GlobalExceptionHandler {
     }
 
     @ServerExceptionMapper
-    public Response handleJsonProcessingException(JsonProcessingException ex) {
+    public Response handleProcessingException(ProcessingException ex) {
+        Throwable causaJson = encontrarCausaJson(ex);
+
+        if (causaJson instanceof InvalidFormatException invalidFormatException) {
+            return handleInvalidFormatException(invalidFormatException);
+        }
+
+        if (causaJson instanceof MismatchedInputException mismatchedInputException) {
+            return handleMismatchedInputException(mismatchedInputException);
+        }
+
+        if (causaJson instanceof JsonParseException jsonParseException) {
+            return handleJsonParseException(jsonParseException);
+        }
+
+        if (causaJson instanceof JsonProcessingException jsonProcessingException) {
+            return handleJsonProcessingException(jsonProcessingException);
+        }
+
         return buildResponse(
                 Response.Status.BAD_REQUEST,
-                "JSON inválido",
-                "O corpo da requisição possui JSON inválido ou incompatível com o contrato da API."
+                "Requisição inválida",
+                "A requisição enviada não pôde ser processada."
         );
     }
 
@@ -109,7 +190,7 @@ public class GlobalExceptionHandler {
         return buildResponse(
                 Response.Status.UNSUPPORTED_MEDIA_TYPE,
                 "Tipo de mídia não suportado",
-                "O tipo de conteúdo enviado não é suportado pela API."
+                "O tipo de conteúdo enviado não é suportado pela API. Utilize application/json."
         );
     }
 
@@ -126,6 +207,24 @@ public class GlobalExceptionHandler {
 
     @ServerExceptionMapper
     public Response handleThrowable(Throwable ex) {
+        Throwable causaJson = encontrarCausaJson(ex);
+
+        if (causaJson instanceof InvalidFormatException invalidFormatException) {
+            return handleInvalidFormatException(invalidFormatException);
+        }
+
+        if (causaJson instanceof MismatchedInputException mismatchedInputException) {
+            return handleMismatchedInputException(mismatchedInputException);
+        }
+
+        if (causaJson instanceof JsonParseException jsonParseException) {
+            return handleJsonParseException(jsonParseException);
+        }
+
+        if (causaJson instanceof JsonProcessingException jsonProcessingException) {
+            return handleJsonProcessingException(jsonProcessingException);
+        }
+
         LOG.error("Erro inesperado ao processar a requisição.", ex);
 
         return buildResponse(
@@ -154,15 +253,124 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
+    private Response buildResponseComDetalhes(
+            Response.Status status,
+            String erro,
+            String mensagem,
+            List<String> detalhes
+    ) {
+        ErroResponse erroResponse = ErroResponse.withDetalhes(
+                status.getStatusCode(),
+                erro,
+                mensagem,
+                obterCaminho(),
+                detalhes
+        );
+
+        return Response
+                .status(status)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(erroResponse)
+                .build();
+    }
+
+    private List<String> montarDetalhesCampoInvalido(InvalidFormatException ex) {
+        String campo = obterCampoJson(ex);
+        String valorRecebido = String.valueOf(ex.getValue());
+        String tipoEsperado = obterTipoEsperado(ex.getTargetType());
+
+        List<String> detalhes = new ArrayList<>();
+
+        detalhes.add("Campo: " + campo);
+        detalhes.add("Valor recebido: " + valorRecebido);
+        detalhes.add("Tipo esperado: " + tipoEsperado);
+
+        if (Number.class.isAssignableFrom(ex.getTargetType())
+                || ex.getTargetType().isPrimitive()) {
+            detalhes.add("Orientação: envie campos numéricos sem aspas e sem letras. Exemplo correto: \"valorInicial\": 1000.00");
+        }
+
+        return detalhes;
+    }
+
+    private List<String> montarDetalhesMapeamentoInvalido(MismatchedInputException ex) {
+        String campo = obterCampoJson(ex);
+        String tipoEsperado = obterTipoEsperado(ex.getTargetType());
+
+        return List.of(
+                "Campo: " + campo,
+                "Tipo esperado: " + tipoEsperado,
+                "Orientação: confira se o valor enviado respeita o tipo definido no contrato da API."
+        );
+    }
+
+    private String obterCampoJson(JsonMappingException ex) {
+        if (ex.getPath() == null || ex.getPath().isEmpty()) {
+            return "corpo da requisição";
+        }
+
+        JsonMappingException.Reference ultimaReferencia = ex.getPath().get(ex.getPath().size() - 1);
+
+        if (ultimaReferencia.getFieldName() != null) {
+            return ultimaReferencia.getFieldName();
+        }
+
+        return "corpo da requisição";
+    }
+
+    private String obterTipoEsperado(Class<?> targetType) {
+        if (targetType == null) {
+            return "tipo compatível com o contrato da API";
+        }
+
+        if (targetType.equals(Integer.class) || targetType.equals(Integer.TYPE)) {
+            return "número inteiro";
+        }
+
+        if (targetType.equals(Long.class) || targetType.equals(Long.TYPE)) {
+            return "número inteiro longo";
+        }
+
+        if (targetType.equals(Double.class)
+                || targetType.equals(Double.TYPE)
+                || targetType.equals(Float.class)
+                || targetType.equals(Float.TYPE)
+                || targetType.equals(BigDecimal.class)) {
+            return "número decimal";
+        }
+
+        return targetType.getSimpleName();
+    }
+
     private String formatarViolacao(ConstraintViolation<?> violacao) {
         return violacao.getPropertyPath() + ": " + violacao.getMessage();
     }
 
-    private String obterCaminho() {
-        if (uriInfo == null) {
-            return null;
+    private Throwable encontrarCausaJson(Throwable ex) {
+        Throwable atual = ex;
+
+        while (atual != null) {
+            if (atual instanceof JsonProcessingException) {
+                return atual;
+            }
+
+            atual = atual.getCause();
         }
 
-        return "/" + uriInfo.getPath();
+        return null;
+    }
+
+    private String obterCaminho() {
+        if (uriInfo == null || uriInfo.getPath() == null || uriInfo.getPath().isBlank()) {
+            return "/";
+        }
+
+        String caminho = uriInfo.getPath();
+
+        if (caminho.startsWith("/")) {
+            return caminho;
+        }
+
+        return "/" + caminho;
     }
 }
