@@ -13,34 +13,26 @@ A aplicação executa de forma 100% nativa, sem Docker ou Docker Compose.
 
 Verifique as versões instaladas:
 
-```bash
-java -version
-mvn -version
-```
-
----
-
-## Como compilar
-
-Na raiz do projeto, execute:
+## Comandos principais
 
 ```bash
+# Compila o projeto e verifica se o código-fonte está sem erros de compilação
 mvn clean compile
-```
 
----
-
-## Como executar os testes
-
-```bash
+# Executa os testes automatizados do projeto
 mvn clean test
+
+# Executa os testes e gera o relatório de cobertura do JaCoCo
+mvn clean test jacoco:report
+
+# Executa a validação completa da entrega: compila, testa, gera relatório e valida a cobertura mínima configurada
+mvn clean verify
+
+# Inicia a aplicação em modo desenvolvimento
+mvn quarkus:dev
 ```
 
----
-
-## Como validar os testes e a cobertura mínima de 80%
-
-Este é o comando principal para avaliação da entrega:
+O comando principal para avaliação da entrega é:
 
 ```bash
 mvn clean verify
@@ -54,12 +46,6 @@ Se a cobertura mínima não for atingida, o build será finalizado com erro.
 
 ## Relatório de cobertura JaCoCo
 
-Para gerar apenas o relatório de cobertura após os testes:
-
-```bash
-mvn clean test jacoco:report
-```
-
 O relatório HTML será gerado em:
 
 ```text
@@ -70,9 +56,9 @@ Abra esse arquivo no navegador para visualizar a cobertura por pacote, classe e 
 
 ---
 
-## Como executar a aplicação
+## Execução da aplicação
 
-Em modo desenvolvimento:
+Após executar:
 
 ```bash
 mvn quarkus:dev
@@ -93,13 +79,11 @@ Com a aplicação em execução, acesse:
 ```text
 http://localhost:8080/q/swagger-ui
 ```
-
 A especificação OpenAPI fica disponível em:
 
 ```text
 http://localhost:8080/q/openapi
 ```
-
 ---
 
 ## Banco de dados
@@ -130,34 +114,11 @@ Payload de exemplo:
 
 Exemplo com curl no Windows:
 
-```bash
-curl -X POST http://localhost:8080/simulacoes ^
-  -H "Content-Type: application/json" ^
-  -d "{\"valorInicial\":1000.00,\"taxaJurosMensal\":1.5,\"prazoMeses\":12}"
-```
-
-Exemplo com curl no Linux/macOS:
-
-```bash
-curl -X POST http://localhost:8080/simulacoes \
-  -H "Content-Type: application/json" \
-  -d '{"valorInicial":1000.00,"taxaJurosMensal":1.5,"prazoMeses":12}'
-```
-
----
-
 ### Consultar simulação por ID
 
 ```http
 GET /simulacoes/{id}
 ```
-
-Exemplo:
-
-```bash
-curl http://localhost:8080/simulacoes/1
-```
-
 ---
 
 ## Formato da resposta de simulação
@@ -179,8 +140,12 @@ curl http://localhost:8080/simulacoes/1
     }
   ]
 }
-```
 
+
+```
+```
+####  Obs: em juros compostos o saldo inicial de cada mês, deve ser o saldo final do mês anterior
+```
 ---
 
 ## Validações principais
@@ -190,9 +155,11 @@ A API valida:
 - `valorInicial`: obrigatório, numérico e maior que zero;
 - `taxaJurosMensal`: obrigatória, numérica e maior ou igual a zero;
 - `prazoMeses`: obrigatório, numérico, inteiro e maior que zero;
-- ID da simulação: obrigatório e maior que zero nas consultas.
+- `id`: obrigatório e maior que zero nas consultas.
 
-Falhas de validação e regras de negócio retornam HTTP 400. Simulações inexistentes retornam HTTP 404.
+Falhas de validação e regras de negócio retornam HTTP 400.
+
+Simulações inexistentes retornam HTTP 404.
 
 ---
 
@@ -204,7 +171,7 @@ A memória de cálculo registra a evolução mensal do saldo:
 
 - mês;
 - saldo inicial;
-- juros do período;
+- juro do período;
 - saldo final.
 
 ---
@@ -219,22 +186,4 @@ Executar o pacote gerado:
 
 ```bash
 java -jar target/quarkus-app/quarkus-run.jar
-```
-
----
-
-## Comandos essenciais para avaliação
-
-```bash
-mvn clean compile
-mvn clean test
-mvn clean test jacoco:report
-mvn clean verify
-mvn quarkus:dev
-```
-
-O comando mais importante para validar a entrega é:
-
-```bash
-mvn clean verify
 ```
