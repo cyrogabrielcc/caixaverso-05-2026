@@ -17,19 +17,19 @@ public final class OpenApiExamples {
                 {
                   "mes": 1,
                   "saldoInicial": 1000.00,
-                  "juros": 15.00,
+                  "juro": 15.00,
                   "saldoFinal": 1015.00
                 },
                 {
                   "mes": 2,
                   "saldoInicial": 1015.00,
-                  "juros": 15.23,
+                  "juro": 15.23,
                   "saldoFinal": 1030.23
                 },
                 {
                   "mes": 3,
                   "saldoInicial": 1030.23,
-                  "juros": 15.45,
+                  "juro": 15.45,
                   "saldoFinal": 1045.68
                 }
               ]

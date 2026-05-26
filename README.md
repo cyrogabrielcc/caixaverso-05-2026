@@ -112,7 +112,6 @@ Payload de exemplo:
 }
 ```
 
-Exemplo com curl no Windows:
 
 ### Consultar simulação por ID
 
