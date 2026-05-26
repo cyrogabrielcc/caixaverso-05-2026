@@ -239,7 +239,7 @@ public class GlobalExceptionHandler {
             String erro,
             String mensagem
     ) {
-        ErroResponse erroResponse = ErroResponse.of(
+        ErroResponseDTO erroResponse = ErroResponseDTO.of(
                 status.getStatusCode(),
                 erro,
                 mensagem,
@@ -259,7 +259,7 @@ public class GlobalExceptionHandler {
             String mensagem,
             List<String> detalhes
     ) {
-        ErroResponse erroResponse = ErroResponse.withDetalhes(
+        ErroResponseDTO erroResponse = ErroResponseDTO.withDetalhes(
                 status.getStatusCode(),
                 erro,
                 mensagem,

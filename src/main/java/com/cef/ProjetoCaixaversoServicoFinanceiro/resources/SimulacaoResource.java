@@ -2,22 +2,26 @@ package com.cef.ProjetoCaixaversoServicoFinanceiro.resources;
 
 import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoRequestDTO;
 import com.cef.ProjetoCaixaversoServicoFinanceiro.dto.SimulacaoResponseDTO;
-import com.cef.ProjetoCaixaversoServicoFinanceiro.exception.ErroResponse;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.exception.ErroResponseDTO;
+import com.cef.ProjetoCaixaversoServicoFinanceiro.openapi.OpenApiExamples;
 import com.cef.ProjetoCaixaversoServicoFinanceiro.service.SimulacaoService;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.ExampleObject;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
@@ -45,30 +49,36 @@ public class SimulacaoResource {
     @POST
     @Operation(
             summary = "Simula e persiste um cálculo de juros compostos",
-            description = "Recebe valor inicial, taxa de juros mensal e prazo em meses. Calcula a evolução mês a mês por juros compostos, persiste a simulação no H2 e retorna o resultado completo com ID, totais e memória de cálculo."
+            description = "Recebe os parâmetros da simulação, calcula a evolução mês a mês, persiste o resultado no banco de dados e retorna a simulação completa."
     )
     @APIResponse(
             responseCode = "201",
-            description = "Simulação calculada e persistida com sucesso.",
+            description = "Simulação calculada, persistida e retornada com sucesso.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = SimulacaoResponseDTO.class)
+                    schema = @Schema(implementation = SimulacaoResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "Simulação criada",
+                            value = OpenApiExamples.SIMULACAO_RESPONSE
+                    )
             )
     )
     @APIResponse(
             responseCode = "400",
-            description = "Dados inválidos na requisição ou violação de regra de negócio.",
+            description = "Dados inválidos na requisição ou JSON malformado.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
-            )
-    )
-    @APIResponse(
-            responseCode = "415",
-            description = "Tipo de mídia não suportado. A API aceita requisições com Content-Type application/json.",
-            content = @Content(
-                    mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
+                    schema = @Schema(implementation = ErroResponseDTO.class),
+                    examples = {
+                            @ExampleObject(
+                                    name = "Erro de validação",
+                                    value = OpenApiExamples.ERRO_POST_VALIDACAO
+                            ),
+                            @ExampleObject(
+                                    name = "Campo numérico com texto",
+                                    value = OpenApiExamples.ERRO_POST_JSON_INVALIDO
+                            )
+                    }
             )
     )
     @APIResponse(
@@ -76,30 +86,31 @@ public class SimulacaoResource {
             description = "Erro interno inesperado ao processar a simulação.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
+                    schema = @Schema(implementation = ErroResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "Erro interno",
+                            value = OpenApiExamples.ERRO_INTERNO_POST
+                    )
             )
     )
     public Response simular(
             @RequestBody(
                     description = "Dados necessários para realizar a simulação de juros compostos.",
                     required = true,
-                    content = @Content(
-                            mediaType = MediaType.APPLICATION_JSON,
-                            schema = @Schema(implementation = SimulacaoRequestDTO.class)
-                    )
+                    content = @Content(schema = @Schema(implementation = SimulacaoRequestDTO.class))
             )
-            @Valid SimulacaoRequestDTO requestDTO
+            @Valid SimulacaoRequestDTO requestDTO,
+
+            @Context UriInfo uriInfo
     ) {
-        SimulacaoResponseDTO simulacao = simulacaoService.simular(requestDTO);
+        SimulacaoResponseDTO responseDTO = simulacaoService.simular(requestDTO);
 
-        URI location = UriBuilder
-                .fromResource(SimulacaoResource.class)
-                .path("/{id}")
-                .build(simulacao.getId());
+        URI location = uriInfo.getAbsolutePathBuilder()
+                .path(responseDTO.getId().toString())
+                .build();
 
-        return Response
-                .created(location)
-                .entity(simulacao)
+        return Response.created(location)
+                .entity(responseDTO)
                 .build();
     }
 
@@ -114,7 +125,11 @@ public class SimulacaoResource {
             description = "Simulação encontrada e retornada com sucesso.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = SimulacaoResponseDTO.class)
+                    schema = @Schema(implementation = SimulacaoResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "Simulação encontrada",
+                            value = OpenApiExamples.SIMULACAO_RESPONSE
+                    )
             )
     )
     @APIResponse(
@@ -122,7 +137,11 @@ public class SimulacaoResource {
             description = "ID inválido. O ID da simulação deve ser maior que zero.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
+                    schema = @Schema(implementation = ErroResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "ID inválido",
+                            value = OpenApiExamples.ERRO_GET_ID_INVALIDO
+                    )
             )
     )
     @APIResponse(
@@ -130,7 +149,11 @@ public class SimulacaoResource {
             description = "Nenhuma simulação foi encontrada para o ID informado.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
+                    schema = @Schema(implementation = ErroResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "Simulação não encontrada",
+                            value = OpenApiExamples.ERRO_GET_NAO_ENCONTRADA
+                    )
             )
     )
     @APIResponse(
@@ -138,7 +161,11 @@ public class SimulacaoResource {
             description = "Erro interno inesperado ao consultar a simulação.",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON,
-                    schema = @Schema(implementation = ErroResponse.class)
+                    schema = @Schema(implementation = ErroResponseDTO.class),
+                    examples = @ExampleObject(
+                            name = "Erro interno",
+                            value = OpenApiExamples.ERRO_INTERNO_GET
+                    )
             )
     )
     public Response buscarPorId(
@@ -147,9 +174,11 @@ public class SimulacaoResource {
                     required = true,
                     example = "1"
             )
-            @PathParam("id") Long id
+            @PathParam("id")
+            @Min(value = 1, message = "O ID da simulação deve ser maior que zero.")
+            Long id
     ) {
-        SimulacaoResponseDTO simulacao = simulacaoService.buscarPorId(id);
-        return Response.ok(simulacao).build();
+        SimulacaoResponseDTO responseDTO = simulacaoService.buscarPorId(id);
+        return Response.ok(responseDTO).build();
     }
 }
