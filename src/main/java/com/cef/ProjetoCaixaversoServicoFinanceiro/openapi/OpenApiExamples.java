@@ -85,7 +85,6 @@ public final class OpenApiExamples {
               "mensagem": "Simulação não encontrada com o ID informado.",
               "caminho": "/simulacoes/999",
               "detalhes": []
-              ]
            }
            """;
 

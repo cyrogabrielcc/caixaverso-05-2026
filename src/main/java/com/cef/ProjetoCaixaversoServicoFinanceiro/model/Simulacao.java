@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
@@ -22,56 +23,35 @@ public class Simulacao {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "valor_inicial", nullable = false, precision = 19, scale = 2)
     private BigDecimal valorInicial;
 
-    @Column(nullable = false, precision = 10, scale = 6)
+    @Column(name = "taxa_juros_mensal", nullable = false, precision = 19, scale = 6)
     private BigDecimal taxaJurosMensal;
 
-    @Column(nullable = false)
+    @Column(name = "prazo_meses", nullable = false)
     private Integer prazoMeses;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "valor_total_final", nullable = false, precision = 19, scale = 2)
     private BigDecimal valorTotalFinal;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "valor_total_juros", nullable = false, precision = 19, scale = 2)
     private BigDecimal valorTotalJuros;
 
     @OneToMany(
             mappedBy = "simulacao",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            fetch = FetchType.LAZY
+            fetch = FetchType.EAGER
     )
+    @OrderBy("mes ASC")
     private List<MemoriaCalculo> memoriaCalculo = new ArrayList<>();
 
     public Simulacao() {
     }
 
-    public Simulacao(
-            Long id,
-            BigDecimal valorInicial,
-            BigDecimal taxaJurosMensal,
-            Integer prazoMeses,
-            BigDecimal valorTotalFinal,
-            BigDecimal valorTotalJuros,
-            List<MemoriaCalculo> memoriaCalculo
-    ) {
-        this.id = id;
-        this.valorInicial = valorInicial;
-        this.taxaJurosMensal = taxaJurosMensal;
-        this.prazoMeses = prazoMeses;
-        this.valorTotalFinal = valorTotalFinal;
-        this.valorTotalJuros = valorTotalJuros;
-        setMemoriaCalculo(memoriaCalculo);
-    }
-
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public BigDecimal getValorInicial() {
@@ -122,14 +102,21 @@ public class Simulacao {
         this.memoriaCalculo.clear();
 
         if (memoriaCalculo != null) {
-            for (MemoriaCalculo item : memoriaCalculo) {
-                adicionarMemoriaCalculo(item);
-            }
+            memoriaCalculo.forEach(this::adicionarMemoriaCalculo);
         }
     }
 
-    public void adicionarMemoriaCalculo(MemoriaCalculo memoria) {
-        memoria.setSimulacao(this);
-        this.memoriaCalculo.add(memoria);
+    public void adicionarMemoriaCalculo(MemoriaCalculo memoriaCalculo) {
+        if (memoriaCalculo != null) {
+            memoriaCalculo.setSimulacao(this);
+            this.memoriaCalculo.add(memoriaCalculo);
+        }
+    }
+
+    public void removerMemoriaCalculo(MemoriaCalculo memoriaCalculo) {
+        if (memoriaCalculo != null) {
+            memoriaCalculo.setSimulacao(null);
+            this.memoriaCalculo.remove(memoriaCalculo);
+        }
     }
 }

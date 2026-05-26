@@ -20,16 +20,16 @@ public class MemoriaCalculo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private int mes;
+    @Column(name = "mes", nullable = false)
+    private Integer mes;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "saldo_inicial", nullable = false, precision = 19, scale = 2)
     private BigDecimal saldoInicial;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "juro", nullable = false, precision = 19, scale = 2)
     private BigDecimal juro;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(name = "saldo_final", nullable = false, precision = 19, scale = 2)
     private BigDecimal saldoFinal;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,35 +39,15 @@ public class MemoriaCalculo {
     public MemoriaCalculo() {
     }
 
-    public MemoriaCalculo(
-            Long id,
-            int mes,
-            BigDecimal saldoInicial,
-            BigDecimal juro,
-            BigDecimal saldoFinal,
-            Simulacao simulacao
-    ) {
-        this.id = id;
-        this.mes = mes;
-        this.saldoInicial = saldoInicial;
-        this.juro = juro;
-        this.saldoFinal = saldoFinal;
-        this.simulacao = simulacao;
-    }
-
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public int getMes() {
+    public Integer getMes() {
         return mes;
     }
 
-    public void setMes(int mes) {
+    public void setMes(Integer mes) {
         this.mes = mes;
     }
 

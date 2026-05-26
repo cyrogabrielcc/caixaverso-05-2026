@@ -150,7 +150,7 @@ public class SimulacaoService {
             );
 
             MemoriaCalculo memoria = new MemoriaCalculo();
-            memoria.setMes(mes);
+            memoria.setMes(Integer.valueOf(mes));
             memoria.setSaldoInicial(saldoInicial);
             memoria.setJuro(juro);
             memoria.setSaldoFinal(saldoFinal);

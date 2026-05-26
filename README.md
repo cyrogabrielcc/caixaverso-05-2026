@@ -1,74 +1,160 @@
-# Simulador de Financiamentos
+# Simulador de Financiamentos - Java
 
-API em Java 25 com Quarkus para simulação de juros compostos, geração de memória de cálculo e persistência em H2.
-## Running the application in dev mode
+API backend desenvolvida em **Java 25**, **Quarkus** e **H2 Database** para simular financiamentos com juros compostos, persistir a simulação e permitir consulta posterior pelo ID.
 
-You can run your application in dev mode that enables live coding using:
+## Stack utilizada
 
-```shell script
-./mvnw quarkus:dev
+- Java 25
+- Quarkus
+- H2 Database embutido
+- Hibernate ORM / Panache
+- Jakarta Validation
+- OpenAPI / Swagger
+- JUnit 5
+- RestAssured
+- JaCoCo
+- Maven
+
+> O projeto não utiliza Docker nem Docker Compose.
+
+## Requisitos da aplicação
+
+A API permite:
+
+- criar uma simulação de financiamento;
+- calcular juros compostos mês a mês;
+- gerar memória de cálculo com saldo inicial, juro e saldo final;
+- persistir o resultado no banco H2;
+- consultar uma simulação existente pelo ID;
+- expor documentação via Swagger.
+
+## Como executar o projeto
+
+Na raiz do projeto, execute:
+
+```bash
+mvn quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+Ou, usando Maven Wrapper no Windows:
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package
+```bash
+mvnw.cmd quarkus:dev
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+A aplicação ficará disponível em:
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+```text
+http://localhost:8080
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+## Swagger
 
-## Creating a native executable
+Com a aplicação em execução, acesse:
 
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
+```text
+http://localhost:8080/q/swagger-ui
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+## Endpoints
 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+### Criar simulação
+
+```http
+POST /simulacoes
 ```
 
-You can then execute your native executable with: `./target/app-produto-financeiro-1.0.0-SNAPSHOT-runner`
+Exemplo de requisição:
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
+```json
+{
+  "valorInicial": 1000.00,
+  "taxaJurosMensal": 1.5,
+  "prazoMeses": 3
+}
+```
 
-## Related Guides
+Exemplo de resposta:
 
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- JDBC Driver - H2 ([guide](https://quarkus.io/guides/datasource)): Connect to the H2 database via JDBC
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplify your persistence code for Hibernate ORM via the active record or the repository pattern
+```json
+{
+  "id": 1,
+  "valorInicial": 1000.00,
+  "taxaJurosMensal": 1.500000,
+  "prazoMeses": 3,
+  "valorTotalFinal": 1045.68,
+  "valorTotalJuros": 45.68,
+  "memoriaCalculo": [
+    {
+      "mes": 1,
+      "saldoInicial": 1000.00,
+      "juro": 15.00,
+      "saldoFinal": 1015.00
+    },
+    {
+      "mes": 2,
+      "saldoInicial": 1015.00,
+      "juro": 15.23,
+      "saldoFinal": 1030.23
+    },
+    {
+      "mes": 3,
+      "saldoInicial": 1030.23,
+      "juro": 15.45,
+      "saldoFinal": 1045.68
+    }
+  ]
+}
+```
 
-## Provided Code
+### Consultar simulação por ID
 
-### Hibernate ORM
+```http
+GET /simulacoes/{id}
+```
 
-Create your first JPA entity
+Exemplo:
 
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
+```http
+GET /simulacoes/1
+```
 
-[Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
+## Como compilar
 
+```bash
+mvn clean compile
+```
 
-### REST
+Ou, usando Maven Wrapper no Windows:
 
-Easily start your REST Web Services
+```bash
+mvnw.cmd clean compile
+```
 
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+## Como executar os testes e validar cobertura
+
+Para executar a suíte de testes e validar a cobertura mínima configurada pelo JaCoCo, execute:
+
+```bash
+mvn clean verify
+```
+
+Ou, usando Maven Wrapper no Windows:
+
+```bash
+mvnw.cmd clean verify
+```
+
+O relatório de cobertura será gerado em:
+
+```text
+target/site/jacoco/index.html
+```
+
+## Observações técnicas
+
+- Os cálculos financeiros utilizam `BigDecimal`.
+- A taxa de juros mensal é recebida em formato percentual.
+- A memória de cálculo é persistida junto com a simulação.
+- A API retorna respostas HTTP adequadas para sucesso, validação e recursos não encontrados.
+- As tabelas do H2 são criadas automaticamente pela aplicação.
