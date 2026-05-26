@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -397,6 +398,38 @@ class SimulacaoServiceTest {
         assertEquals("O ID da simulação deve ser maior que zero.", exception.getMessage());
 
         verifyNoInteractions(simulacaoRepository);
+    }
+
+    @Test
+    void deveRetornarZeroQuandoCalcularValorTotalFinalReceberMemoriaNula() throws Exception {
+        Method metodo = SimulacaoService.class.getDeclaredMethod(
+                "calcularValorTotalFinal",
+                List.class
+        );
+        metodo.setAccessible(true);
+
+        BigDecimal resultado = (BigDecimal) metodo.invoke(
+                simulacaoService,
+                new Object[]{null}
+        );
+
+        assertEquals(new BigDecimal("0.00"), resultado);
+    }
+
+    @Test
+    void deveRetornarZeroQuandoCalcularValorTotalFinalReceberMemoriaVazia() throws Exception {
+        Method metodo = SimulacaoService.class.getDeclaredMethod(
+                "calcularValorTotalFinal",
+                List.class
+        );
+        metodo.setAccessible(true);
+
+        BigDecimal resultado = (BigDecimal) metodo.invoke(
+                simulacaoService,
+                List.of()
+        );
+
+        assertEquals(new BigDecimal("0.00"), resultado);
     }
 
     @Test
