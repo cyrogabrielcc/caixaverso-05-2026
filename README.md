@@ -25,7 +25,7 @@ A aplicação executa de forma nativa, sem Docker ou Docker Compose.
 - JUnit 5
 - RestAssured
 - Mockito
-- JaCoCo
+- JaCoCo - Cobertura de Testes de 93%
 
 ---
 
