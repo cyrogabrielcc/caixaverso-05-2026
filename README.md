@@ -1,8 +1,8 @@
 # Projeto Caixaverso - Serviço Financeiro
 
-API backend em Java com Quarkus para simulação de financiamentos com juros compostos, geração de memória de cálculo mensal e persistência em banco H2 embutido.
+API backend desenvolvida em Java 25 com Quarkus para simulação de financiamentos com juros compostos, geração de memória de cálculo mensal e persistência em banco H2 embutido.
 
-A aplicação executa de forma 100% nativa, sem Docker ou Docker Compose.
+A aplicação executa de forma nativa, sem Docker ou Docker Compose.
 
 ---
 
@@ -11,54 +11,51 @@ A aplicação executa de forma 100% nativa, sem Docker ou Docker Compose.
 - Java 25
 - Maven
 
-Verifique as versões instaladas:
+---
 
-## Comandos principais
+## Tecnologias utilizadas
 
-```bash
-# Compila o projeto e verifica se o código-fonte está sem erros de compilação
-mvn clean compile
-
-# Executa os testes automatizados do projeto
-mvn clean test
-
-# Executa os testes e gera o relatório de cobertura do JaCoCo
-mvn clean test jacoco:report
-
-# Executa a validação completa da entrega: compila, testa, gera relatório e valida a cobertura mínima configurada
-mvn clean verify
-
-# Inicia a aplicação em modo desenvolvimento
-mvn quarkus:dev
-```
-
-O comando principal para avaliação da entrega é:
-
-```bash
-mvn clean verify
-```
-
-Esse comando compila o projeto, executa a suíte de testes, gera o relatório do JaCoCo e valida a cobertura mínima configurada no projeto.
-
-Se a cobertura mínima não for atingida, o build será finalizado com erro.
+- Java 25
+- Quarkus
+- H2 Database
+- Hibernate ORM com Panache
+- Jakarta REST
+- Jakarta Validation
+- OpenAPI / Swagger
+- JUnit 5
+- RestAssured
+- Mockito
+- JaCoCo
 
 ---
 
-## Relatório de cobertura JaCoCo
+## Como executar a validação da entrega
 
-O relatório HTML será gerado em:
+Execute o comando abaixo na raiz do projeto:
+
+```bash
+mvn clean verify
+```
+
+Esse comando compila o projeto, executa os testes automatizados, gera o relatório de cobertura do JaCoCo e valida a cobertura mínima configurada.
+
+---
+
+## Relatório de cobertura
+
+Após a execução da validação, o relatório HTML do JaCoCo será gerado em:
 
 ```text
 target/site/jacoco/index.html
 ```
 
-Abra esse arquivo no navegador para visualizar a cobertura por pacote, classe e método.
+Abra esse arquivo no navegador para consultar a cobertura por pacote, classe e método.
 
 ---
 
-## Execução da aplicação
+## Como executar a aplicação
 
-Após executar:
+Execute:
 
 ```bash
 mvn quarkus:dev
@@ -79,22 +76,24 @@ Com a aplicação em execução, acesse:
 ```text
 http://localhost:8080/q/swagger-ui
 ```
+
 A especificação OpenAPI fica disponível em:
 
 ```text
 http://localhost:8080/q/openapi
 ```
+
 ---
 
 ## Banco de dados
 
 O projeto utiliza H2 Database em modo embutido.
 
-As tabelas são criadas automaticamente pela aplicação. Não é necessário instalar banco externo nem executar scripts SQL manuais.
+As tabelas são criadas automaticamente pela aplicação, sem necessidade de instalação de banco externo ou execução manual de scripts SQL.
 
 ---
 
-## Endpoints principais
+## Endpoints
 
 ### Criar simulação
 
@@ -112,15 +111,15 @@ Payload de exemplo:
 }
 ```
 
-
 ### Consultar simulação por ID
 
 ```http
 GET /simulacoes/{id}
 ```
+
 ---
 
-## Formato da resposta de simulação
+## Exemplo de resposta
 
 ```json
 {
@@ -128,8 +127,8 @@ GET /simulacoes/{id}
   "valorInicial": 1000.00,
   "taxaJurosMensal": 1.500000,
   "prazoMeses": 12,
-  "valorTotalFinal": 1195.62,
-  "valorTotalJuros": 195.62,
+  "valorTotalFinal": 1195.63,
+  "valorTotalJuros": 195.63,
   "memoriaCalculo": [
     {
       "mes": 1,
@@ -139,17 +138,15 @@ GET /simulacoes/{id}
     }
   ]
 }
+```
 
+Na memória de cálculo, o saldo inicial de cada mês corresponde ao saldo final do mês anterior.
 
-```
-```
-####  Obs: em juros compostos o saldo inicial de cada mês, deve ser o saldo final do mês anterior
-```
 ---
 
-## Validações principais
+## Validações
 
-A API valida:
+A API valida os seguintes campos:
 
 - `valorInicial`: obrigatório, numérico e maior que zero;
 - `taxaJurosMensal`: obrigatória, numérica e maior ou igual a zero;
@@ -164,9 +161,9 @@ Simulações inexistentes retornam HTTP 404.
 
 ## Precisão financeira
 
-Os cálculos financeiros utilizam `BigDecimal`, evitando perdas de precisão de `double` ou `float`.
+Os cálculos financeiros utilizam `BigDecimal`, evitando perda de precisão por uso de `double` ou `float`.
 
-A memória de cálculo registra a evolução mensal do saldo:
+A memória de cálculo registra, para cada mês:
 
 - mês;
 - saldo inicial;
@@ -175,14 +172,12 @@ A memória de cálculo registra a evolução mensal do saldo:
 
 ---
 
-## Empacotar a aplicação
+## Empacotamento
+
+Para gerar o pacote da aplicação, execute:
 
 ```bash
 mvn clean package
 ```
 
-Executar o pacote gerado:
-
-```bash
-java -jar target/quarkus-app/quarkus-run.jar
-```
+O artefato executável será gerado na estrutura padrão do Quarkus.

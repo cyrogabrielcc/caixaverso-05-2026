@@ -38,7 +38,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_POST_VALIDACAO = """
             {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 400,
               "erro": "Dados inválidos",
               "mensagem": "A requisição possui campos inválidos.",
@@ -53,7 +53,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_POST_JSON_INVALIDO = """
             {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 400,
               "erro": "Requisição inválida",
               "mensagem": "O campo 'valorInicial' deve receber apenas números.",
@@ -66,7 +66,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_GET_ID_INVALIDO = """
             {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 400,
               "erro": "Dados inválidos",
               "mensagem": "O ID da simulação deve ser maior que zero.",
@@ -79,7 +79,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_GET_NAO_ENCONTRADA = """
            {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 404,
               "erro": "Recurso não encontrado",
               "mensagem": "Simulação não encontrada com o ID informado.",
@@ -90,7 +90,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_INTERNO_POST = """
             {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 500,
               "erro": "Erro interno do servidor",
               "mensagem": "Ocorreu um erro inesperado ao processar a simulação. Tente novamente mais tarde.",
@@ -101,7 +101,7 @@ public final class OpenApiExamples {
 
     public static final String ERRO_INTERNO_GET = """
             {
-              "timestamp": "2026-05-25T17:30:00",
+              "timestamp": "2026-05-25 17:30:00",
               "status": 500,
               "erro": "Erro interno do servidor",
               "mensagem": "Ocorreu um erro inesperado ao consultar a simulação. Tente novamente mais tarde.",
